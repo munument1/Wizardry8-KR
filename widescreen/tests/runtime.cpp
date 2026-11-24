@@ -9,7 +9,13 @@ int main(int argc, char** argv) {
     assert(argc >= 2);
     unsigned char* game = static_cast<unsigned char*>(VirtualAlloc(reinterpret_cast<void*>(0x400000), 0x200000,
         MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE));
-    assert(game == reinterpret_cast<unsigned char*>(0x400000));
+    if (game != reinterpret_cast<unsigned char*>(0x400000)) {
+        MEMORY_BASIC_INFORMATION info = {};
+        VirtualQuery(reinterpret_cast<void*>(0x400000), &info, sizeof(info));
+        fprintf(stderr, "Test fixture allocation failed: error=%lu allocation=%p executable=%p\n",
+                GetLastError(), info.AllocationBase, GetModuleHandleA(nullptr));
+        return 2;
+    }
     const unsigned char tableHead[] = {0x56,0x57,0x8b,0x3d,0xa0,0xb1,0x5e,0,0x6a,8,0xff,0xd7};
     const unsigned char oldA[] = {0x25,0xff,0xff,0,0};
     const unsigned char oldB[] = {0x81,0xe2,0xff,0xff,0,0};

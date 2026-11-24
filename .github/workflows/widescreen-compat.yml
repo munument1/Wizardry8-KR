@@ -37,7 +37,7 @@ jobs:
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
           python widescreen/tools/package.py --korean-zip "$env:RUNNER_TEMP/kr.zip"
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
-          & "$toolchain/i686-w64-mingw32-clang++.exe" -std=c++17 -O2 -I widescreen/build/loader/src widescreen/tests/runtime.cpp widescreen/build/loader/src/exe_version.cpp -static -lbcrypt '-Wl,--image-base,0x20000000' -o widescreen/build/runtime-test.exe
+          & "$toolchain/i686-w64-mingw32-clang++.exe" -std=c++17 -O2 -I widescreen/build/loader/src widescreen/tests/runtime.cpp widescreen/build/loader/src/exe_version.cpp -static -lbcrypt '-Wl,--image-base,0x20000000,--disable-dynamicbase' -o widescreen/build/runtime-test.exe
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
       - name: Test original and hotfix DLLs without executing game code
         shell: pwsh
