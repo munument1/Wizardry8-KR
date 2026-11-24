@@ -9,6 +9,12 @@
 #include <wchar.h>
 
 static char g_dir[MAX_PATH];
+// Retail addresses stay fixed in production. The Windows unit harness can place
+// its synthetic image elsewhere, where the process heap cannot claim it first.
+static uintptr_t g_retailBase = 0x400000;
+static void* Retail(uintptr_t address) {
+    return reinterpret_cast<void*>(g_retailBase + address - 0x400000);
+}
 static void Note(const char* text) {
 #ifdef WIZ8KR_TESTING
     (void)text;
@@ -99,9 +105,9 @@ void KoreanInstall(HMODULE hybrid) {
     const unsigned char tableHead[] = {0x56,0x57,0x8b,0x3d,0xa0,0xb1,0x5e,0,0x6a,8,0xff,0xd7};
     const unsigned char oldA[] = {0x25,0xff,0xff,0,0};
     const unsigned char oldB[] = {0x81,0xe2,0xff,0xff,0,0};
-    if (memcmp(reinterpret_cast<void*>(0x407ec0), tableHead, sizeof(tableHead)) ||
-        memcmp(reinterpret_cast<void*>(0x55a1e3), oldA, sizeof(oldA)) ||
-        memcmp(reinterpret_cast<void*>(0x55a3d4), oldB, sizeof(oldB)))
+    if (memcmp(Retail(0x407ec0), tableHead, sizeof(tableHead)) ||
+        memcmp(Retail(0x55a1e3), oldA, sizeof(oldA)) ||
+        memcmp(Retail(0x55a3d4), oldB, sizeof(oldB)))
         Fail("Korean patch sites differ after installing the widescreen hooks. Startup stopped.");
     // Find every expected option literal BEFORE changing anything. Scan only .rdata;
     // the on-disk non-MIT wiz8hy.dll is never edited or redistributed by this project.
@@ -133,9 +139,9 @@ void KoreanInstall(HMODULE hybrid) {
     }
     const unsigned char newA[] = {0x0f,0xb7,0xc0,0x01,0xc0};
     const unsigned char newB[] = {0x0f,0xb7,0xd2,0x01,0xd2,0x90};
-    Write(reinterpret_cast<void*>(0x55a1e3), newA, sizeof(newA));
-    Write(reinterpret_cast<void*>(0x55a3d4), newB, sizeof(newB));
-    Jump(0x407ec0, reinterpret_cast<const void*>(&CreateKoreanTable));
+    Write(Retail(0x55a1e3), newA, sizeof(newA));
+    Write(Retail(0x55a3d4), newB, sizeof(newB));
+    Jump(reinterpret_cast<uintptr_t>(Retail(0x407ec0)), reinterpret_cast<const void*>(&CreateKoreanTable));
     for (size_t i = 0; i < count; ++i)
         Write(sites[i], kOptionText[i].korean, (wcslen(kOptionText[i].korean) + 1) * sizeof(wchar_t));
     Note("Installed: font table hook, two NPC buffer fixes, 16 Korean option strings. Game files unchanged.");

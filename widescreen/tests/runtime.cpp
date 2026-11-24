@@ -7,15 +7,10 @@
 
 int main(int argc, char** argv) {
     assert(argc >= 2);
-    unsigned char* game = static_cast<unsigned char*>(VirtualAlloc(reinterpret_cast<void*>(0x400000), 0x200000,
+    unsigned char* game = static_cast<unsigned char*>(VirtualAlloc(nullptr, 0x200000,
         MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE));
-    if (game != reinterpret_cast<unsigned char*>(0x400000)) {
-        MEMORY_BASIC_INFORMATION info = {};
-        VirtualQuery(reinterpret_cast<void*>(0x400000), &info, sizeof(info));
-        fprintf(stderr, "Test fixture allocation failed: error=%lu allocation=%p executable=%p\n",
-                GetLastError(), info.AllocationBase, GetModuleHandleA(nullptr));
-        return 2;
-    }
+    assert(game);
+    g_retailBase = reinterpret_cast<uintptr_t>(game);
     const unsigned char tableHead[] = {0x56,0x57,0x8b,0x3d,0xa0,0xb1,0x5e,0,0x6a,8,0xff,0xd7};
     const unsigned char oldA[] = {0x25,0xff,0xff,0,0};
     const unsigned char oldB[] = {0x81,0xe2,0xff,0xff,0,0};
@@ -50,7 +45,7 @@ int main(int argc, char** argv) {
     const unsigned char newB[]={0x0f,0xb7,0xd2,0x01,0xd2,0x90};
     assert(!memcmp(game+0x15a1e3,newA,sizeof(newA)));
     assert(!memcmp(game+0x15a3d4,newB,sizeof(newB)));
-    auto* table=reinterpret_cast<FontTable* (__cdecl*)()>(0x407ec0)();
+    auto* table=reinterpret_cast<FontTable* (__cdecl*)()>(game + 0x7ec0)();
     assert(table->count==3299 && !memcmp(table->characters,kKoreanMap,sizeof(kKoreanMap)));
     using WcstombsFn=size_t (__cdecl*)(char*,const wchar_t*,size_t);
     auto convert=reinterpret_cast<WcstombsFn>(GetProcAddress(crt,"wcstombs"));
