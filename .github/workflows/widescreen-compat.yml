@@ -77,8 +77,15 @@ jobs:
           $tag = 'v0.3.0-widescreen-test1'
           gh release view $tag --repo $env:GITHUB_REPOSITORY 2>$null
           if ($LASTEXITCODE -eq 0) {
-            Write-Host 'This test release already exists; leaving it unchanged.'
+            # GitHub sanitizes non-ASCII asset filenames. Keep a clear ASCII name
+            # and a Korean display label without replacing the tested bytes.
+            $assetId = gh api "repos/$env:GITHUB_REPOSITORY/releases/tags/$tag" --jq '.assets[0].id'
+            if ($LASTEXITCODE) { exit $LASTEXITCODE }
+            gh api --method PATCH "repos/$env:GITHUB_REPOSITORY/releases/assets/$assetId" -f 'name=Wizardry8_1.24_Widescreen_KoreanPatch_v0.3.0-test1.zip' -f 'label=위저드리8 1.24 와이드 호환 한글패치 v0.3.0-test1.zip'
+            if ($LASTEXITCODE) { exit $LASTEXITCODE }
+            Write-Host 'Kept the existing tested release; corrected its download name and display label.'
             exit 0
           }
-          gh release create $tag 'widescreen/build/위저드리8_1.24_와이드호환_한글패치_v0.3.0-test1.zip' --repo $env:GITHUB_REPOSITORY --target $env:GITHUB_SHA --prerelease --title 'Wizardry 8 1.24 와이드 호환 한글패치 v0.3.0-test1' --notes-file release-notes/v0.3.0-widescreen-test1.md
+          Copy-Item 'widescreen/build/위저드리8_1.24_와이드호환_한글패치_v0.3.0-test1.zip' 'widescreen/build/Wizardry8_1.24_Widescreen_KoreanPatch_v0.3.0-test1.zip'
+          gh release create $tag 'widescreen/build/Wizardry8_1.24_Widescreen_KoreanPatch_v0.3.0-test1.zip#위저드리8 1.24 와이드 호환 한글패치 v0.3.0-test1.zip' --repo $env:GITHUB_REPOSITORY --target $env:GITHUB_SHA --prerelease --title 'Wizardry 8 1.24 와이드 호환 한글패치 v0.3.0-test1' --notes-file release-notes/v0.3.0-widescreen-test1.md
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
