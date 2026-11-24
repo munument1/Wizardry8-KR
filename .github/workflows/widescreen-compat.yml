@@ -54,6 +54,8 @@ jobs:
               if ($LASTEXITCODE -ne 1) { throw "Expected refusal for $negative" }
             }
           }
+          # Negative cases intentionally return 1; the step itself succeeded.
+          exit 0
       - name: Test Windows installer and removal
         shell: pwsh
         run: |
