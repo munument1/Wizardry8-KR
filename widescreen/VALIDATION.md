@@ -1,4 +1,4 @@
-# v0.3.0-test1 검증 기록
+# v0.3.0-test1 로컬 검증 기록
 
 검증일: 2026-11-24. 실제 게임의 GUI 및 플레이는 검증하지 않았습니다.
 
@@ -20,6 +20,7 @@ Unicorn의 Win32 API와 테스트용 할당·로캘 함수는 모의 구현입�
 Linux PowerShell 테스트의 INI API도 모의 구현입니다. 실제 Windows의 CRT 변환·DLL 로딩·파일 API,
 와이드 엔진과의 전체 초기화 순서 및 게임 화면을 대체하지 않습니다.
 Windows에서 실제 CRT CP949 변환까지 확인하는 `tests/runtime.cpp`와 설치 테스트,
-GitHub Actions 설정을 준비했지만 이번 작업에서는 Windows 테스트를 실행하지 못했습니다.
+GitHub Actions 설정을 준비했습니다. 이 로컬 검증 환경에서는 Windows 테스트를 실행하지 못했으며,
+릴리스 배포 과정의 Windows 검사 결과는 해당 GitHub Actions 실행 기록을 확인하세요.
 
 인게임 최종 확인 후 정식 배포로 전환해야 합니다. 현재 파일은 시험판입니다.

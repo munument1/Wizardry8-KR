@@ -8,6 +8,8 @@ on:
   workflow_dispatch:
 permissions:
   contents: write
+env:
+  PYTHONUTF8: '1'
 jobs:
   windows:
     runs-on: windows-latest
