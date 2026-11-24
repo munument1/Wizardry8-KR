@@ -18,7 +18,14 @@ public static class Wiz8KrIni {
 '@
 function Hash([string]$Path) {
     if (!(Test-Path -LiteralPath $Path -PathType Leaf)) { return '' }
-    return (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash.ToLowerInvariant()
+    $stream = [System.IO.File]::OpenRead($Path)
+    $algorithm = [System.Security.Cryptography.SHA256]::Create()
+    try {
+        return ([System.BitConverter]::ToString($algorithm.ComputeHash($stream))).Replace('-', '').ToLowerInvariant()
+    } finally {
+        $algorithm.Dispose()
+        $stream.Dispose()
+    }
 }
 function IniValue([string]$Path) {
     $value = New-Object System.Text.StringBuilder 128

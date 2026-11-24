@@ -1,12 +1,14 @@
 """Windows integration tests: hashes, rollback/removal, Bink proxy and preserved settings."""
 from pathlib import Path
-import hashlib, shutil, subprocess, sys, tempfile
+import hashlib, os, shutil, subprocess, sys, tempfile
 package=Path(sys.argv[1]).resolve(); original=Path(sys.argv[2]).resolve(); wide=Path(sys.argv[3]).resolve()
 
 def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
 def invoke(root,game,*args,ok=True):
+    env=dict(os.environ)
+    if os.name=='nt': env.pop('PSModulePath',None) # pwsh 7 module paths are not Windows PowerShell 5 modules
     p=subprocess.run(['powershell.exe','-NoProfile','-NonInteractive','-ExecutionPolicy','Bypass',
-        '-File',str(root/'Install-Korean.ps1'),'-GameDir',str(game),*args],capture_output=True)
+        '-File',str(root/'Install-Korean.ps1'),'-GameDir',str(game),*args],capture_output=True,env=env)
     if (p.returncode==0)!=ok:raise AssertionError((p.returncode,p.stdout.decode(errors='replace'),p.stderr.decode(errors='replace')))
     return p
 with tempfile.TemporaryDirectory(prefix='wiz8kr-') as temp:
