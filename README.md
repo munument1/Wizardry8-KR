@@ -2,6 +2,15 @@
 
 Wizardry 8과 Fan Patch 1.28을 위한 비공식 한국어 패치입니다.
 
+## 1.24 와이드 호환 시험판
+
+[와이드 호환 한글패치 v0.3.0-test1](../../releases/tag/v0.3.0-widescreen-test1)은
+순정 GOG/Steam 1.24에 원본 [Widescreen 1.0.3](https://github.com/abr17/wiz8-widescreen/releases/tag/v1.0.3)을
+먼저 설치한 뒤 적용하는 별도 패키지입니다. hotfix1도 지원하며 **Fan Patch 1.28용이 아닙니다**.
+ZIP을 별도 폴더에 풀어 `install.cmd`를 실행하고, 순정 `Wiz8.exe`로 시작하세요.
+기존 `Wiz8_124_Korean.exe`로 실행하지 마세요. 실제 게임 화면·플레이 검증은 아직 필요합니다.
+자세한 설치·제거 방법은 [와이드 호환판 안내](widescreen/README.md)를 확인하세요.
+
 ## 최신 릴리스
 
 - 원본 1.24: `Wizardry8_KoreanPatch_1.24_JournalFix_v0.2.8.zip`

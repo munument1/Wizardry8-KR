@@ -1,0 +1,91 @@
+name: Widescreen Korean compatibility
+on:
+  push:
+    branches: [feat/widescreen-124-korean]
+    paths: ['widescreen/**', '.github/workflows/widescreen-compat.yml']
+  pull_request:
+    paths: ['widescreen/**', '.github/workflows/widescreen-compat.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+env:
+  PYTHONUTF8: '1'
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Download pinned build and test inputs
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          Invoke-WebRequest 'https://github.com/mstorsjo/llvm-mingw/releases/download/20261117/llvm-mingw-20261117-msvcrt-x86_64.zip' -OutFile "$env:RUNNER_TEMP/llvm.zip"
+          Expand-Archive "$env:RUNNER_TEMP/llvm.zip" "$env:RUNNER_TEMP/llvm"
+          Invoke-WebRequest 'https://github.com/munument1/Wizardry8-KR/releases/download/0.2.8%281.24%29/Wizardry8_KoreanPatch_1.24_JournalMonoGalmuri11_v0.2.9-test2.zip' -OutFile "$env:RUNNER_TEMP/kr.zip"
+          Invoke-WebRequest 'https://github.com/abr17/wiz8-widescreen/releases/download/v1.0.3/Wiz8Widescreen-1.0.3.zip' -OutFile "$env:RUNNER_TEMP/wide.zip"
+          Invoke-WebRequest 'https://github.com/abr17/wiz8-widescreen/releases/download/v1.0.3/Wiz8Widescreen-1.0.3-hotfix1.zip' -OutFile "$env:RUNNER_TEMP/hotfix.zip"
+          Expand-Archive "$env:RUNNER_TEMP/wide.zip" "$env:RUNNER_TEMP/wide"
+          Expand-Archive "$env:RUNNER_TEMP/hotfix.zip" "$env:RUNNER_TEMP/hotfix"
+      - name: Build adapter and package
+        shell: pwsh
+        run: |
+          $toolchain = "$env:RUNNER_TEMP/llvm/llvm-mingw-20261117-msvcrt-x86_64/bin"
+          python widescreen/tools/build.py --toolchain $toolchain
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          python widescreen/tools/package.py --korean-zip "$env:RUNNER_TEMP/kr.zip"
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          & "$toolchain/i686-w64-mingw32-clang++.exe" -std=c++17 -O2 -I widescreen/build/loader/src widescreen/tests/runtime.cpp widescreen/build/loader/src/exe_version.cpp -static -lbcrypt '-Wl,--image-base,0x20000000,--disable-dynamicbase' -o widescreen/build/runtime-test.exe
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+      - name: Test original and hotfix DLLs without executing game code
+        shell: pwsh
+        run: |
+          python widescreen/tests/static_check.py --wide "$env:RUNNER_TEMP/wide.zip"
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          python widescreen/tests/static_check.py --wide "$env:RUNNER_TEMP/hotfix.zip"
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          foreach ($dll in @("$env:RUNNER_TEMP/wide/files/wiz8hy.dll", "$env:RUNNER_TEMP/hotfix/wiz8hy.dll")) {
+            & widescreen/build/runtime-test.exe $dll
+            if ($LASTEXITCODE) { exit $LASTEXITCODE }
+            foreach ($negative in @('bad-site', 'missing-string')) {
+              & widescreen/build/runtime-test.exe $dll $negative
+              if ($LASTEXITCODE -ne 1) { throw "Expected refusal for $negative" }
+            }
+          }
+          # Negative cases intentionally return 1; the step itself succeeded.
+          exit 0
+      - name: Test Windows installer and removal
+        shell: pwsh
+        run: |
+          python widescreen/tests/recover_fixture.py "$env:RUNNER_TEMP/kr.zip" "$env:RUNNER_TEMP/private-fixture/Wiz8.exe"
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          python widescreen/tests/install_test.py widescreen/build/package "$env:RUNNER_TEMP/private-fixture/Wiz8.exe" "$env:RUNNER_TEMP/wide/files"
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+      - name: Upload Korean overlay only
+        uses: actions/upload-artifact@v4
+        with:
+          name: Wizardry8-124-Korean-Widescreen-test1
+          path: widescreen/build/위저드리8_1.24_와이드호환_한글패치_v0.3.0-test1.zip
+      - name: Publish authorized widescreen test release
+        if: github.event_name == 'push' && github.ref == 'refs/heads/feat/widescreen-124-korean'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $tag = 'v0.3.0-widescreen-test1'
+          gh release view $tag --repo $env:GITHUB_REPOSITORY 2>$null
+          if ($LASTEXITCODE -eq 0) {
+            # GitHub sanitizes non-ASCII asset filenames. Keep a clear ASCII name
+            # and a Korean display label without replacing the tested bytes.
+            $assetId = gh api "repos/$env:GITHUB_REPOSITORY/releases/tags/$tag" --jq '.assets[0].id'
+            if ($LASTEXITCODE) { exit $LASTEXITCODE }
+            gh api --method PATCH "repos/$env:GITHUB_REPOSITORY/releases/assets/$assetId" -f 'name=Wizardry8_1.24_Widescreen_KoreanPatch_v0.3.0-test1.zip' -f 'label=위저드리8 1.24 와이드 호환 한글패치 v0.3.0-test1.zip'
+            if ($LASTEXITCODE) { exit $LASTEXITCODE }
+            Write-Host 'Kept the existing tested release; corrected its download name and display label.'
+            exit 0
+          }
+          Copy-Item 'widescreen/build/위저드리8_1.24_와이드호환_한글패치_v0.3.0-test1.zip' 'widescreen/build/Wizardry8_1.24_Widescreen_KoreanPatch_v0.3.0-test1.zip'
+          gh release create $tag 'widescreen/build/Wizardry8_1.24_Widescreen_KoreanPatch_v0.3.0-test1.zip#위저드리8 1.24 와이드 호환 한글패치 v0.3.0-test1.zip' --repo $env:GITHUB_REPOSITORY --target $env:GITHUB_SHA --prerelease --title 'Wizardry 8 1.24 와이드 호환 한글패치 v0.3.0-test1' --notes-file release-notes/v0.3.0-widescreen-test1.md
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }

@@ -1,0 +1,18 @@
+{
+  "View distance": "가시 거리",
+  "Frame rate limit": "프레임 제한",
+  "Unlimited": "제한 없음",
+  "Display mode": "화면 모드",
+  "Borderless window": "테두리 없는 창",
+  "Fullscreen": "전체 화면",
+  "Window": "창 모드",
+  "Resolution": "해상도",
+  "Restart the game to apply.": "적용하려면 게임을 다시 실행하세요.",
+  "Not supported by the monitor.": "모니터가 지원하지 않는 설정입니다.",
+  "Experimental": "실험 기능",
+  "Animated Main Menu": "메인 메뉴 애니메이션",
+  "Map Mouse Controls": "지도 마우스 조작",
+  "Original Bug Fixes": "원본 오류 수정",
+  "Alternative Game Tick": "대체 시간 처리",
+  "These features are off by default, may change, and may be removed in a later version.": "기본적으로 꺼져 있는 실험 기능입니다. 추후 변경되거나 삭제될 수 있습니다."
+}
